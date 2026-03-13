@@ -15,8 +15,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const existing = await prisma.account.findFirst({ where: { id, householdId: household.id } });
     if (!existing) return jsonError('Compte introuvable', 404);
 
-    const scope = parsed.visibility === 'SHARED' ? { ownerUserId: null, visibility: 'SHARED' as const } : parsed.view ? resolveOwnerAndVisibility(parsed.view, userId) : {};
-    const updated = await prisma.account.update({ where: { id }, data: { ...parsed, ...scope }, include: { ownerUser: true } });
+    const { view, ...data } = parsed;
+    const scope = data.visibility === 'SHARED' ? { ownerUserId: null, visibility: 'SHARED' as const } : view ? resolveOwnerAndVisibility(view, userId) : {};
+    const updated = await prisma.account.update({ where: { id }, data: { ...data, ...scope }, include: { ownerUser: true } });
     return NextResponse.json(serializeAccount(updated));
   } catch (error) {
     return handleApiError(error);

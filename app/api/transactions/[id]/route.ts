@@ -15,10 +15,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const existing = await prisma.transaction.findFirst({ where: { id, householdId: household.id } });
     if (!existing) return jsonError('Transaction introuvable', 404);
 
-    const scope = parsed.visibility === 'SHARED' ? { ownerUserId: null, visibility: 'SHARED' as const } : parsed.view ? resolveOwnerAndVisibility(parsed.view, userId) : {};
+    const { view, ...data } = parsed;
+    const scope = data.visibility === 'SHARED' ? { ownerUserId: null, visibility: 'SHARED' as const } : view ? resolveOwnerAndVisibility(view, userId) : {};
     const updated = await prisma.transaction.update({
       where: { id },
-      data: { ...parsed, ...scope, occurredAt: parsed.occurredAt ? normalizeDateInput(parsed.occurredAt) : undefined },
+      data: { ...data, ...scope, occurredAt: data.occurredAt ? normalizeDateInput(data.occurredAt) : undefined },
       include: { ownerUser: true },
     });
     return NextResponse.json(serializeTransaction(updated));

@@ -15,8 +15,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const existing = await prisma.goal.findFirst({ where: { id, householdId: household.id } });
     if (!existing) return jsonError('Objectif introuvable', 404);
 
-    const scope = parsed.visibility === 'SHARED' ? { ownerUserId: null, visibility: 'SHARED' as const } : parsed.view ? resolveOwnerAndVisibility(parsed.view, userId) : {};
-    const updated = await prisma.goal.update({ where: { id }, data: { ...parsed, ...scope, deadline: parsed.deadline ? normalizeDateInput(parsed.deadline) : parsed.deadline }, include: { ownerUser: true } });
+    const { view, ...data } = parsed;
+    const scope = data.visibility === 'SHARED' ? { ownerUserId: null, visibility: 'SHARED' as const } : view ? resolveOwnerAndVisibility(view, userId) : {};
+    const updated = await prisma.goal.update({ where: { id }, data: { ...data, ...scope, deadline: data.deadline ? normalizeDateInput(data.deadline) : data.deadline }, include: { ownerUser: true } });
     return NextResponse.json(serializeGoal(updated));
   } catch (error) {
     return handleApiError(error);
