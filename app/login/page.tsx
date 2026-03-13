@@ -1,15 +1,40 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Lock } from 'lucide-react';
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginPageFallback />}>
+      <LoginPageContent />
+    </Suspense>
+  );
+}
+
+function LoginPageFallback() {
+  return (
+    <div className="min-h-screen bg-slate-950 text-white">
+      <div className="mx-auto flex min-h-screen max-w-6xl items-center px-6 py-10">
+        <div className="w-full rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
+          <p className="text-sm text-slate-300">Chargement…</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LoginPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('camille@example.com');
   const [password, setPassword] = useState('demo1234');
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+
+  const created = searchParams.get('created') === '1';
 
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -23,7 +48,8 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = '/dashboard';
+    router.push('/dashboard');
+    router.refresh();
   };
 
   return (
@@ -43,17 +69,23 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur">
-            <h2 className="text-2xl font-semibold">Connexion</h2>
-            <p className="mt-2 text-sm text-slate-300">Compte de démo seedé automatiquement en dev.</p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold">Connexion</h2>
+                <p className="mt-2 text-sm text-slate-300">Compte de démo seedé automatiquement en dev.</p>
+              </div>
+              <Link href="/signup" className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-teal-200 hover:bg-white/5">Créer un compte</Link>
+            </div>
             <form onSubmit={onSubmit} className="mt-6 space-y-4">
               <label className="block">
                 <span className="mb-2 block text-sm text-slate-300">Email</span>
-                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" className="w-full rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 outline-none ring-0" />
+                <input value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" className="w-full rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 outline-none ring-0" />
               </label>
               <label className="block">
                 <span className="mb-2 block text-sm text-slate-300">Mot de passe</span>
-                <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" className="w-full rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 outline-none ring-0" />
+                <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete="current-password" className="w-full rounded-2xl border border-white/10 bg-slate-900/70 px-4 py-3 outline-none ring-0" />
               </label>
+              {created ? <p className="text-sm text-emerald-300">Compte créé. Vous pouvez maintenant vous connecter.</p> : null}
               {error ? <p className="text-sm text-red-300">{error}</p> : null}
               <button disabled={pending} className="w-full rounded-2xl bg-teal-500 px-4 py-3 font-medium text-slate-950 transition hover:bg-teal-400 disabled:opacity-60">{pending ? 'Connexion…' : 'Entrer dans le dashboard'}</button>
             </form>

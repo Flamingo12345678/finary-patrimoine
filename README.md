@@ -18,6 +18,8 @@ Repo: https://github.com/Flamingo12345678/finary-patrimoine
 ## Ce que le projet couvre
 
 - dashboard patrimoine moderne
+- connexion email/mot de passe réellement fonctionnelle
+- création de compte simple avec hash bcrypt
 - CRUD comptes / actifs / transactions / objectifs
 - import CSV avec preview
 - onboarding d’import plus guidé
@@ -41,6 +43,12 @@ Puis ouvrir `http://localhost:3000/login`
 
 - Email: `camille@example.com`
 - Mot de passe: `demo1234`
+
+### Créer un compte
+
+- UI: `http://localhost:3000/signup`
+- endpoint: `POST /api/auth/signup`
+- à la création, le mot de passe est validé puis hashé avec bcrypt avant insertion Prisma
 
 ## Variables d'environnement
 
@@ -69,7 +77,6 @@ npm run db:push:pg
 npm run db:seed
 ```
 
-
 ## Docker Compose local
 
 Objectif: lancer l’app Next.js avec PostgreSQL local persistant, sans casser le mode SQLite existant hors Docker.
@@ -86,6 +93,11 @@ docker compose up -d --build
 ```
 
 Puis ouvrir `http://localhost:3001/login`
+
+### Flux auth disponibles dans Docker
+
+- connexion démo: `camille@example.com` / `demo1234`
+- inscription: `http://localhost:3001/signup`
 
 ### Arrêt / reset
 
@@ -139,54 +151,6 @@ Le dashboard embarque désormais un flux d’onboarding plus propre:
 4. lancer une preview avant import réel
 5. vérifier les erreurs éventuelles avant persistance
 
-### Formats attendus
-
-#### Comptes
-
-```csv
-name,institution,type,balance,currency
-Compte courant,Banque Horizon,CHECKING,12540,EUR
-```
-
-Types acceptés:
-- `CHECKING`
-- `SAVINGS`
-- `INVESTMENT`
-- `RETIREMENT`
-- `CREDIT`
-
-#### Actifs
-
-```csv
-name,category,value,cost_basis,performance_pct,account
-ETF Monde,EQUITY,38800,36000,7.6,PEA long terme
-```
-
-Catégories acceptées:
-- `CASH`
-- `EQUITY`
-- `BOND`
-- `REAL_ESTATE`
-- `CRYPTO`
-- `OTHER`
-
-#### Transactions
-
-```csv
-label,amount,type,category,date,account,note
-Dividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel
-```
-
-Types acceptés:
-- `INCOME`
-- `EXPENSE`
-- `TRANSFER`
-- `INVESTMENT`
-
-Formats de date recommandés:
-- `YYYY-MM-DD`
-- ISO datetime
-
 ## Scripts utiles
 
 ```bash
@@ -202,91 +166,6 @@ npm run db:generate:pg
 npm run db:push:pg
 ```
 
-## Tests
-
-Tests ajoutés de façon pragmatique:
-
-- unitaires sur validation / normalisation de dates
-- unitaires sur parsing CSV
-- composant sur le flux d’onboarding CSV
-
-Lancer:
-
-```bash
-npm run test
-```
-
-Mode watch:
-
-```bash
-npm run test:watch
-```
-
-## CI/CD
-
-### CI
-
-Workflow: `.github/workflows/ci.yml`
-
-Déclenchement:
-- push sur `main` et `develop`
-- pull requests
-
-Étapes:
-- `npm ci`
-- `npm run db:generate`
-- `npm run lint`
-- `npm run test`
-- `npm run build`
-
-### Déploiement dev / prod
-
-Workflow: `.github/workflows/deploy.yml`
-
-Stratégie:
-- `develop` -> déploiement preview / development
-- `main` -> déploiement production
-- `workflow_dispatch` pour relancer manuellement preview ou production
-
-Le workflow est prêt pour Vercel via `npx vercel@latest`.
-
-### Secrets GitHub / Vercel à configurer
-
-Dans GitHub Actions:
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
-
-Dans l’environnement Vercel (preview et production selon besoin):
-- `DATABASE_URL`
-- `AUTH_SECRET`
-- `AUTH_URL`
-
-Recommandé côté GitHub:
-- environnements `development` et `production`
-- branch protection sur `main`
-- CI requise avant merge
-
-## Sécurité / dépendances
-
-Un nettoyage sûr des dépendances a été appliqué.
-
-### État actuel
-
-- `npm audit`: **0 vulnérabilité connue**
-- `next` mis à jour en `15.5.12`
-- `eslint-config-next` aligné en `15.5.12`
-
-### Ce qui reste à connaître
-
-Il ne reste pas de vulnérabilités `npm audit` dans ce lockfile, mais il reste des sujets produit/ops typiques MVP:
-- pas de MFA
-- pas de reset password
-- pas de déduplication d’import CSV
-- sécurité finale dépendante des secrets et de la plateforme d’hébergement
-
-Détail complémentaire: voir `docs/security.md`.
-
 ## Vérifications réalisées
 
 Les commandes suivantes ont été validées dans ce repo:
@@ -295,6 +174,7 @@ Les commandes suivantes ont été validées dans ce repo:
 npm run lint
 npm run test
 npm run build
+docker compose up -d --build
 ```
 
 ## Limites actuelles
@@ -304,14 +184,6 @@ npm run build
 - pas de multi-devises avancé
 - pas de design system complet
 - auth encore simple pour un MVP
-
-## Prochaines étapes utiles
-
-- mapping de colonnes interactif à l’import
-- déduplication / idempotence d’import
-- audit logs et rate limiting
-- reset password + MFA
-- courbes historiques plus riches
 
 ## Artefacts BMAD
 

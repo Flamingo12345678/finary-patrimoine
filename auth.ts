@@ -2,17 +2,12 @@ import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import bcrypt from 'bcryptjs';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-
-const credentialsSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
+import { credentialsSchema } from '@/lib/auth-validation';
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: 'database' },
+  session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
   providers: [
     Credentials({
@@ -36,8 +31,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     }),
   ],
   callbacks: {
-    session: async ({ session, user }) => {
-      if (session.user) session.user.id = user.id;
+    jwt: async ({ token, user }) => {
+      if (user?.id) token.sub = user.id;
+      return token;
+    },
+    session: async ({ session, token }) => {
+      if (session.user && token.sub) session.user.id = token.sub;
       return session;
     },
   },

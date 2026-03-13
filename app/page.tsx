@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, PieChart, ShieldCheck, Upload } from 'lucide-react';
+import { ArrowRight, PieChart, ShieldCheck, Upload, UserPlus } from 'lucide-react';
 
 export default function HomePage() {
   return (
@@ -11,7 +11,8 @@ export default function HomePage() {
             <h1 className="text-5xl font-semibold leading-tight sm:text-7xl">Une interface patrimoine plus premium, pilotable et concrète.</h1>
             <p className="mt-6 max-w-2xl text-lg text-slate-300">Centralisez vos comptes, positions, objectifs et transactions dans un cockpit moderne avec authentification, persistance Prisma, CRUD complet et import CSV exploitable.</p>
             <div className="mt-10 flex flex-wrap gap-4">
-              <Link href="/login" className="inline-flex items-center gap-2 rounded-2xl bg-teal-400 px-6 py-3 font-medium text-slate-950 hover:bg-teal-300">Se connecter à la démo <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/login" className="inline-flex items-center gap-2 rounded-2xl bg-teal-400 px-6 py-3 font-medium text-slate-950 hover:bg-teal-300">Se connecter <ArrowRight className="h-4 w-4" /></Link>
+              <Link href="/signup" className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-6 py-3 font-medium text-white hover:bg-white/5">Créer un compte <UserPlus className="h-4 w-4" /></Link>
               <Link href="/dashboard" className="rounded-2xl border border-white/15 px-6 py-3 font-medium text-white hover:bg-white/5">Voir le dashboard</Link>
             </div>
           </div>
