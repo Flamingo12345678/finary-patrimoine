@@ -45,28 +45,28 @@ export function CsvImportOnboarding({ entity, format, view, csvText, preview, sa
 
   return (
     <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-      <div className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-        <div className="flex items-start gap-3 rounded-3xl border border-teal-100 bg-white p-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-50 text-teal-700"><Sparkles className="h-5 w-5" /></div>
+      <div className="space-y-4 rounded-[28px] border border-white/10 bg-black/10 p-5">
+        <div className="flex items-start gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#66e2cf]/12 text-[#7ef0df]"><Sparkles className="h-5 w-5" /></div>
           <div>
-            <p className="text-sm font-semibold text-slate-900">Import guidé</p>
-            <p className="mt-1 text-sm leading-6 text-slate-500">Prévisualisez avant import, attribuez au bon périmètre et évitez les doublons évidents.</p>
+            <p className="text-sm font-semibold text-white">Import guidé</p>
+            <p className="mt-1 text-sm leading-6 text-slate-400">Prévisualisez avant import, attribuez au bon périmètre et évitez les doublons évidents.</p>
           </div>
         </div>
 
         <div>
-          <p className="text-sm font-medium text-slate-600">Étape 1 · Choisir le jeu à importer</p>
+          <p className="text-sm font-medium text-slate-300">Étape 1 · Choisir le jeu à importer</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             {(['transactions', 'accounts', 'assets'] as ImportEntity[]).map((option) => {
               const active = option === entity;
               return (
-                <button key={option} type="button" onClick={() => onEntityChange(option)} className={`rounded-3xl border p-4 text-left transition ${active ? 'border-slate-950 bg-slate-950 text-white shadow-lg' : 'border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50/40'}`}>
+                <button key={option} type="button" onClick={() => onEntityChange(option)} className={`rounded-3xl border p-4 text-left transition ${active ? 'border-white/20 bg-white text-slate-950 shadow-[0_18px_40px_rgba(255,255,255,0.12)]' : 'border-white/10 bg-white/5 text-slate-200 hover:border-white/20 hover:bg-white/10'}`}>
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="font-medium">{importGuides[option].title}</p>
-                      <p className={`mt-2 text-sm leading-5 ${active ? 'text-slate-300' : 'text-slate-500'}`}>{importGuides[option].description}</p>
+                      <p className={`mt-2 text-sm leading-5 ${active ? 'text-slate-600' : 'text-slate-400'}`}>{importGuides[option].description}</p>
                     </div>
-                    {active ? <CheckCircle2 className="h-5 w-5 text-teal-300" /> : <FileSpreadsheet className="h-5 w-5 text-slate-400" />}
+                    {active ? <CheckCircle2 className="h-5 w-5 text-emerald-500" /> : <FileSpreadsheet className="h-5 w-5 text-slate-400" />}
                   </div>
                 </button>
               );
@@ -74,20 +74,20 @@ export function CsvImportOnboarding({ entity, format, view, csvText, preview, sa
           </div>
         </div>
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-4">
-          <p className="text-sm font-medium text-slate-600">Étape 2 · Format et périmètre</p>
+        <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm font-medium text-slate-300">Étape 2 · Format et périmètre</p>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            <label className="block text-sm font-medium text-slate-600">Format
-              <select value={format} onChange={(event) => onFormatChange(event.target.value as 'csv' | 'ofx' | 'qif')} className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-900 outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100" disabled={entity !== 'transactions'}>
+            <label className="block text-sm font-medium text-slate-300">Format
+              <select value={format} onChange={(event) => onFormatChange(event.target.value as 'csv' | 'ofx' | 'qif')} className="field-input" disabled={entity !== 'transactions'}>
                 <option value="csv">CSV enrichi</option>
                 <option value="ofx">OFX</option>
                 <option value="qif">QIF</option>
               </select>
             </label>
-            <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <p className="font-medium text-slate-900">Vue cible</p>
+            <div className="rounded-2xl bg-black/10 px-4 py-3 text-sm text-slate-300">
+              <p className="font-medium text-white">Vue cible</p>
               <p className="mt-1">{view === 'me' ? 'Moi' : view === 'shared' ? 'Partagé' : 'Foyer'}</p>
-              <p className="mt-2 text-xs leading-5 text-slate-500">En CSV, <code>visibility</code> et <code>owner_email</code> peuvent surcharger ce défaut.</p>
+              <p className="mt-2 text-xs leading-5 text-slate-400">En CSV, <code>visibility</code> et <code>owner_email</code> peuvent surcharger ce défaut.</p>
             </div>
           </div>
           <div className="mt-3 flex flex-wrap gap-3">
@@ -95,17 +95,17 @@ export function CsvImportOnboarding({ entity, format, view, csvText, preview, sa
             <button type="button" onClick={copyTemplate} className="btn-secondary"><ClipboardPaste className="h-4 w-4" /> Copier</button>
             <button type="button" onClick={clear} className="btn-secondary">Vider</button>
           </div>
-          <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-            <p className="font-medium text-slate-900">Champs attendus</p>
-            <p className="mt-2 font-mono text-xs text-slate-500">{guide.acceptedHeaders.join(', ')}</p>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-500">
+          <div className="mt-4 rounded-2xl bg-black/10 p-4 text-sm text-slate-300">
+            <p className="font-medium text-white">Champs attendus</p>
+            <p className="mt-2 font-mono text-xs text-slate-400">{guide.acceptedHeaders.join(', ')}</p>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-400">
               {guide.tips.map((tip) => <li key={tip}>{tip}</li>)}
             </ul>
           </div>
         </div>
 
-        <label className="block text-sm font-medium text-slate-600">Étape 3 · Coller le contenu brut
-          <textarea aria-label="CSV brut" value={csvText} onChange={(event) => onCsvTextChange(event.target.value)} placeholder={csvTemplates[entity]} className="mt-2 h-64 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-700 shadow-inner outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100" />
+        <label className="block text-sm font-medium text-slate-300">Étape 3 · Coller le contenu brut
+          <textarea aria-label="CSV brut" value={csvText} onChange={(event) => onCsvTextChange(event.target.value)} placeholder={csvTemplates[entity]} className="field-input mt-2 h-64 rounded-3xl font-mono text-xs shadow-inner" />
         </label>
 
         <div className="flex flex-wrap gap-3">
@@ -115,14 +115,14 @@ export function CsvImportOnboarding({ entity, format, view, csvText, preview, sa
       </div>
 
       <div className="space-y-4">
-        {preview ? <div className="rounded-[28px] border border-slate-200 bg-white p-5">
-          <div className="flex flex-wrap items-center gap-3"><span className="rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-700">Pipeline {preview.pipeline}</span><span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">{preview.inserted} ligne(s) insérées</span><span className="rounded-full bg-amber-50 px-3 py-1 text-sm text-amber-700">{preview.errors.length} erreur(s)</span></div>
-          <div className="mt-4 rounded-3xl bg-slate-50 p-4">
-            <p className="text-sm font-medium text-slate-700">Étape 4 · Contrôler l’aperçu</p>
-            <pre className="mt-3 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">{JSON.stringify(preview.preview, null, 2)}</pre>
+        {preview ? <div className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <div className="flex flex-wrap items-center gap-3"><span className="rounded-full bg-[#66e2cf]/12 px-3 py-1 text-sm text-[#bff8ee]">Pipeline {preview.pipeline}</span><span className="rounded-full bg-white/[0.08] px-3 py-1 text-sm text-slate-200">{preview.inserted} ligne(s) insérées</span><span className="rounded-full bg-amber-400/10 px-3 py-1 text-sm text-amber-200">{preview.errors.length} erreur(s)</span></div>
+          <div className="mt-4 rounded-3xl bg-black/10 p-4">
+            <p className="text-sm font-medium text-white">Étape 4 · Contrôler l’aperçu</p>
+            <pre className="mt-3 overflow-auto rounded-2xl bg-[#050814] p-4 text-xs text-slate-100">{JSON.stringify(preview.preview, null, 2)}</pre>
           </div>
-          {preview.errors.length > 0 ? <div className="mt-4 space-y-2">{preview.errors.map((issue) => <div key={`${issue.row}-${issue.message}`} className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Ligne {issue.row}: {issue.message}</div>)}</div> : null}
-        </div> : <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-5"><p className="text-sm font-medium text-slate-700">Étape 4 · Contrôler l’aperçu</p><p className="mt-2 text-sm leading-6 text-slate-500">Lancez une preview avant import pour voir les lignes reconnues, la portée et les éventuels doublons déjà écartés.</p></div>}
+          {preview.errors.length > 0 ? <div className="mt-4 space-y-2">{preview.errors.map((issue) => <div key={`${issue.row}-${issue.message}`} className="rounded-2xl border border-amber-300/20 bg-amber-300/10 px-4 py-3 text-sm text-amber-100">Ligne {issue.row}: {issue.message}</div>)}</div> : null}
+        </div> : <div className="rounded-[28px] border border-dashed border-white/16 bg-white/[0.03] p-5"><p className="text-sm font-medium text-white">Étape 4 · Contrôler l’aperçu</p><p className="mt-2 text-sm leading-6 text-slate-400">Lancez une preview avant import pour voir les lignes reconnues, la portée et les éventuels doublons déjà écartés.</p></div>}
       </div>
     </div>
   );

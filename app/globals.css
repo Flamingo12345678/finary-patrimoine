@@ -3,7 +3,22 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+  --bg-0: #060816;
+  --bg-1: #0a1020;
+  --bg-2: #111a2f;
+  --panel: rgba(13, 19, 36, 0.72);
+  --panel-strong: rgba(16, 24, 43, 0.92);
+  --panel-soft: rgba(255, 255, 255, 0.055);
+  --line: rgba(255, 255, 255, 0.1);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --text: #edf4ff;
+  --muted: #95a3bf;
+  --muted-2: #6f7e9b;
+  --accent: #66e2cf;
+  --accent-2: #8ba8ff;
+  --accent-3: #9a8cff;
+  --danger: #ff8a9f;
 }
 
 html {
@@ -11,21 +26,124 @@ html {
 }
 
 body {
-  @apply min-h-screen bg-[linear-gradient(180deg,#f8fafc_0%,#eef2ff_35%,#f8fafc_100%)] text-slate-900 antialiased;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(102, 226, 207, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(139, 168, 255, 0.16), transparent 24%),
+    radial-gradient(circle at bottom, rgba(154, 140, 255, 0.08), transparent 35%),
+    linear-gradient(180deg, var(--bg-0) 0%, var(--bg-1) 52%, #050814 100%);
+  color: var(--text);
+  @apply antialiased;
 }
 
-.card {
-  @apply rounded-[28px] border border-white/70 bg-white/90 shadow-[0_16px_50px_rgba(15,23,42,0.08)] backdrop-blur;
+::selection {
+  background: rgba(102, 226, 207, 0.24);
+  color: white;
 }
 
-.metric {
-  @apply rounded-[24px] border border-slate-200/80 bg-white p-5 shadow-sm;
+@layer base {
+  * {
+    @apply border-white/10;
+  }
+
+  input,
+  select,
+  textarea {
+    color-scheme: dark;
+  }
 }
 
-.btn-primary {
-  @apply inline-flex items-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800;
-}
+@layer components {
+  .app-shell {
+    @apply min-h-screen;
+    background:
+      radial-gradient(circle at top left, rgba(102, 226, 207, 0.1), transparent 24%),
+      radial-gradient(circle at 85% 8%, rgba(139, 168, 255, 0.12), transparent 20%);
+  }
 
-.btn-secondary {
-  @apply inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50;
+  .glass-panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 80px rgba(3, 8, 24, 0.4);
+    backdrop-filter: blur(20px);
+  }
+
+  .card {
+    @apply glass-panel rounded-[28px];
+  }
+
+  .metric {
+    @apply rounded-[24px] border p-5 transition duration-200;
+    border-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  .metric:hover,
+  .surface-hover:hover {
+    transform: translateY(-1px);
+    border-color: rgba(102, 226, 207, 0.22);
+    box-shadow: 0 18px 44px rgba(3, 8, 24, 0.34);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-medium text-slate-950 transition duration-200 disabled:cursor-not-allowed disabled:opacity-60;
+    background: linear-gradient(135deg, var(--accent) 0%, #91f4e5 100%);
+    box-shadow: 0 14px 34px rgba(102, 226, 207, 0.22);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 18px 38px rgba(102, 226, 207, 0.28);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium text-slate-100 transition duration-200 disabled:cursor-not-allowed disabled:opacity-60;
+    border-color: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .btn-secondary:hover {
+    @apply border-white/20 bg-white/[0.08];
+    transform: translateY(-1px);
+  }
+
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.34em];
+    color: var(--muted);
+  }
+
+  .section-title {
+    @apply text-2xl font-semibold tracking-tight text-white;
+  }
+
+  .field-label {
+    @apply block text-sm font-medium;
+    color: #c2cee5;
+  }
+
+  .field-input {
+    @apply mt-2 w-full rounded-2xl border px-4 py-3 text-sm text-white outline-none transition duration-200 placeholder:text-slate-500;
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(5, 10, 23, 0.55);
+  }
+
+  .field-input:focus {
+    border-color: rgba(102, 226, 207, 0.55);
+    box-shadow: 0 0 0 4px rgba(102, 226, 207, 0.12);
+  }
+
+  .status-pill {
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium;
+    background: rgba(255, 255, 255, 0.06);
+    color: #d6def0;
+  }
+
+  .text-muted {
+    color: var(--muted);
+  }
+
+  .text-faint {
+    color: var(--muted-2);
+  }
 }
