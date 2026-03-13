@@ -48,7 +48,7 @@ Puis ouvrir `http://localhost:3000/login`
 ### Dev rapide avec SQLite
 
 ```env
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="file:./dev.db"
 AUTH_SECRET="change-me"
 AUTH_URL="http://localhost:3000"
 ```
