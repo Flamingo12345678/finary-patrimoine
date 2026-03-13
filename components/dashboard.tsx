@@ -1,18 +1,44 @@
-import { accounts, allocation, assets, goals, totalNetWorth, transactions } from '@/lib/data';
+'use client';
+
+import { useEffect, useState } from 'react';
 import { ArrowUpRight, Landmark, PieChart, Target, Wallet } from 'lucide-react';
 
+type DashboardPayload = {
+  summary: { netWorth: number; monthlyFlow: number; accountCount: number; goalCount: number };
+  allocation: { label: string; value: number }[];
+  accounts: { id: string; name: string; institution: string; balance: number; type: string }[];
+  assets: { id: string; name: string; category: string; value: number; performancePct: number | null }[];
+  transactions: { id: string; label: string; category: string; occurredAt: string; amount: number }[];
+  goals: { id: string; name: string; target: number; current: number; deadline: string | null }[];
+};
+
 const currency = (value: number) => new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(value);
+const date = (value: string | null) => value ? new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium' }).format(new Date(value)) : 'Sans échéance';
 
 export function Dashboard() {
-  const monthlyFlow = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+  const [data, setData] = useState<DashboardPayload | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/dashboard', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Impossible de charger les données.');
+        return response.json();
+      })
+      .then(setData)
+      .catch((err: Error) => setError(err.message));
+  }, []);
+
+  if (error) return <main className="mx-auto max-w-4xl px-6 py-10"><div className="card p-6 text-red-600">{error}</div></main>;
+  if (!data) return <main className="mx-auto max-w-4xl px-6 py-10"><div className="card p-6 text-slate-500">Chargement du patrimoine…</div></main>;
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-8">
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Metric icon={<Wallet className="h-5 w-5" />} label="Patrimoine net" value={currency(totalNetWorth)} detail="+4,8% sur 30 jours" />
-        <Metric icon={<Landmark className="h-5 w-5" />} label="Comptes suivis" value={String(accounts.length)} detail="Banque, épargne, investissement" />
-        <Metric icon={<ArrowUpRight className="h-5 w-5" />} label="Flux mensuel" value={currency(monthlyFlow)} detail="Entrées - sorties consolidées" />
-        <Metric icon={<Target className="h-5 w-5" />} label="Objectifs actifs" value={String(goals.length)} detail="Projection d’épargne incluse" />
+        <Metric icon={<Wallet className="h-5 w-5" />} label="Patrimoine net" value={currency(data.summary.netWorth)} detail="Comptes + actifs" />
+        <Metric icon={<Landmark className="h-5 w-5" />} label="Comptes suivis" value={String(data.summary.accountCount)} detail="Banque, épargne, investissement" />
+        <Metric icon={<ArrowUpRight className="h-5 w-5" />} label="Flux récents" value={currency(data.summary.monthlyFlow)} detail="Dix dernières transactions" />
+        <Metric icon={<Target className="h-5 w-5" />} label="Objectifs actifs" value={String(data.summary.goalCount)} detail="Suivi de progression" />
       </section>
 
       <section className="mt-6 grid gap-6 xl:grid-cols-[1.4fr_0.9fr]">
@@ -27,7 +53,7 @@ export function Dashboard() {
             </div>
           </div>
           <div className="mt-6 space-y-4">
-            {allocation.map((slice) => (
+            {data.allocation.map((slice) => (
               <div key={slice.label}>
                 <div className="mb-2 flex justify-between text-sm">
                   <span className="font-medium text-slate-700">{slice.label}</span>
@@ -45,14 +71,14 @@ export function Dashboard() {
           <p className="text-sm text-slate-500">Objectifs</p>
           <h2 className="text-2xl font-semibold">Cap à tenir</h2>
           <div className="mt-5 space-y-5">
-            {goals.map((goal) => {
+            {data.goals.map((goal) => {
               const progress = Math.min(100, Math.round((goal.current / goal.target) * 100));
               return (
-                <div key={goal.name}>
+                <div key={goal.id}>
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <h3 className="font-medium text-slate-800">{goal.name}</h3>
-                      <p className="text-sm text-slate-500">Échéance {goal.deadline}</p>
+                      <p className="text-sm text-slate-500">Échéance {date(goal.deadline)}</p>
                     </div>
                     <span className="text-sm font-medium text-slate-600">{progress}%</span>
                   </div>
@@ -70,8 +96,8 @@ export function Dashboard() {
       <section className="mt-6 grid gap-6 lg:grid-cols-2">
         <Panel title="Comptes" subtitle="Suivi multi-établissements">
           <div className="space-y-3">
-            {accounts.map((account) => (
-              <div key={account.name} className="rounded-2xl border border-slate-200 p-4">
+            {data.accounts.map((account) => (
+              <div key={account.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="font-medium text-slate-900">{account.name}</h3>
@@ -86,8 +112,8 @@ export function Dashboard() {
 
         <Panel title="Actifs" subtitle="Positions principales">
           <div className="space-y-3">
-            {assets.map((asset) => (
-              <div key={asset.name} className="rounded-2xl border border-slate-200 p-4">
+            {data.assets.map((asset) => (
+              <div key={asset.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <h3 className="font-medium text-slate-900">{asset.name}</h3>
@@ -95,7 +121,7 @@ export function Dashboard() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-slate-900">{currency(asset.value)}</p>
-                    <p className="text-sm text-emerald-600">+{asset.change}%</p>
+                    <p className="text-sm text-emerald-600">{asset.performancePct ? `${asset.performancePct > 0 ? '+' : ''}${asset.performancePct}%` : '—'}</p>
                   </div>
                 </div>
               </div>
@@ -117,14 +143,12 @@ export function Dashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 bg-white">
-                {transactions.map((tx) => (
+                {data.transactions.map((tx) => (
                   <tr key={tx.id}>
                     <td className="px-4 py-3 font-medium text-slate-800">{tx.label}</td>
                     <td className="px-4 py-3 text-slate-500">{tx.category}</td>
-                    <td className="px-4 py-3 text-slate-500">{tx.date}</td>
-                    <td className={`px-4 py-3 text-right font-semibold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-slate-900'}`}>
-                      {tx.amount >= 0 ? '+' : ''}{currency(tx.amount)}
-                    </td>
+                    <td className="px-4 py-3 text-slate-500">{date(tx.occurredAt)}</td>
+                    <td className={`px-4 py-3 text-right font-semibold ${tx.amount >= 0 ? 'text-emerald-600' : 'text-slate-900'}`}>{tx.amount >= 0 ? '+' : ''}{currency(tx.amount)}</td>
                   </tr>
                 ))}
               </tbody>

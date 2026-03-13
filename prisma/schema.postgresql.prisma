@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AccountType {
+  CHECKING
+  SAVINGS
+  INVESTMENT
+  RETIREMENT
+  CREDIT
+}
+
+enum AssetCategory {
+  CASH
+  EQUITY
+  BOND
+  REAL_ESTATE
+  CRYPTO
+  OTHER
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+  INVESTMENT
+}
+
+model User {
+  id            String        @id @default(cuid())
+  name          String?
+  email         String        @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  accounts      Account[]
+  assets        Asset[]
+  transactions  Transaction[]
+  goals         Goal[]
+  sessions      Session[]
+  authAccounts  AuthAccount[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model AuthAccount {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Account {
+  id           String        @id @default(cuid())
+  userId       String
+  name         String
+  institution  String
+  balance      Decimal      
+  currency     String        @default("EUR")
+  type         AccountType
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assets       Asset[]
+  transactions Transaction[]
+}
+
+model Asset {
+  id             String        @id @default(cuid())
+  userId         String
+  accountId      String?
+  name           String
+  category       AssetCategory
+  value          Decimal      
+  costBasis      Decimal?     
+  performancePct Decimal?     
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account        Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+}
+
+model Transaction {
+  id          String          @id @default(cuid())
+  userId      String
+  accountId   String?
+  label       String
+  amount      Decimal        
+  type        TransactionType
+  category    String
+  occurredAt  DateTime
+  note        String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  account     Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  name        String
+  target      Decimal 
+  current     Decimal 
+  deadline    DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
