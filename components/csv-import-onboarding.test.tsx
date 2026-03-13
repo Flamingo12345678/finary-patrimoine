@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CsvImportOnboarding } from './csv-import-onboarding';
@@ -32,7 +32,61 @@ describe('CsvImportOnboarding', () => {
     expect(onEntityChange).toHaveBeenCalledWith('accounts');
 
     await user.click(screen.getByRole('button', { name: /charger un exemple/i }));
-    expect(onCsvTextChange).toHaveBeenCalledWith(expect.stringContaining('label,amount,type'));
+    expect(onCsvTextChange).toHaveBeenCalledWith(expect.stringContaining('label,amount,type,category,date,account'));
+  });
+
+  it('reads a dropped ofx file and switches format automatically', async () => {
+    const onCsvTextChange = vi.fn();
+    const onFormatChange = vi.fn();
+
+    render(
+      <CsvImportOnboarding
+        entity="transactions"
+        format="csv"
+        view="household"
+        csvText=""
+        preview={null}
+        savingKey={null}
+        onEntityChange={vi.fn()}
+        onFormatChange={onFormatChange}
+        onCsvTextChange={onCsvTextChange}
+        onRun={vi.fn()}
+      />,
+    );
+
+    const dropzone = screen.getByRole('button', { name: /choisir un fichier ou glisser-déposer/i });
+    const file = new File(['<OFX>demo</OFX>'], 'statement.ofx', { type: 'application/x-ofx' });
+
+    await userEvent.upload(screen.getByLabelText(/sélectionner un fichier d'import/i), file);
+
+    await waitFor(() => {
+      expect(onFormatChange).toHaveBeenCalledWith('ofx');
+      expect(onCsvTextChange).toHaveBeenCalledWith('<OFX>demo</OFX>');
+    });
+
+    expect(dropzone).toHaveTextContent('statement.ofx');
+  });
+
+  it('rejects invalid extensions with a clear message', async () => {
+    render(
+      <CsvImportOnboarding
+        entity="transactions"
+        format="csv"
+        view="household"
+        csvText=""
+        preview={null}
+        savingKey={null}
+        onEntityChange={vi.fn()}
+        onFormatChange={vi.fn()}
+        onCsvTextChange={vi.fn()}
+        onRun={vi.fn()}
+      />,
+    );
+
+    const file = new File(['hello'], 'notes.txt', { type: 'text/plain' });
+    await userEvent.upload(screen.getByLabelText(/sélectionner un fichier d'import/i), file);
+
+    expect(await screen.findByText(/extension invalide/i)).toBeInTheDocument();
   });
 
   it('triggers preview and import actions', async () => {
