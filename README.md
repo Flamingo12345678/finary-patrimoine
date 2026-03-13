@@ -1,56 +1,29 @@
 # Finary Patrimoine
 
-MVP web moderne de suivi patrimonial inspiré des usages wealth-tech, avec backend réel, authentification, persistance Prisma, CRUD complet et import CSV exploitable.
+MVP web de suivi patrimonial inspiré des usages wealth-tech, avec backend réel, authentification, persistance Prisma, CRUD complet, import CSV guidé et pipeline CI/CD pragmatique.
 
 Repo: https://github.com/Flamingo12345678/finary-patrimoine
 
 ## Stack
 
-- Next.js 15 (App Router)
+- Next.js 15
 - TypeScript
 - Tailwind CSS
 - Prisma ORM
 - Auth.js / NextAuth v5 (Credentials)
-- SQLite en dev local, PostgreSQL visé en production
+- SQLite en local, PostgreSQL visé en production
+- Vitest + Testing Library pour les tests
+- GitHub Actions pour CI/CD
 
-## Ce qui a été ajouté
+## Ce que le projet couvre
 
-### 1) CRUD complet
-
-- Endpoints sécurisés avec validation Zod pour:
-  - `GET/POST /api/accounts`
-  - `GET/POST /api/assets`
-  - `GET/POST /api/transactions`
-  - `GET/POST /api/goals`
-  - `PATCH/DELETE /api/accounts/:id`
-  - `PATCH/DELETE /api/assets/:id`
-  - `PATCH/DELETE /api/transactions/:id`
-  - `PATCH/DELETE /api/goals/:id`
-- UI de création, édition et suppression directement dans le dashboard
-- Validation et messages d’erreur propres côté API
-
-### 2) Import / sync patrimonial
-
-- Route `GET/POST /api/import/csv`
-- Import CSV pour:
-  - comptes
-  - actifs
-  - transactions
-- Parsing robuste sans dépendance lourde:
-  - support `,` et `;`
-  - gestion simple des guillemets
-  - normalisation d’en-têtes
-  - mapping de colonnes usuelles
-- Preview avant import (`dryRun`) puis persistance en base
-- Abstraction légère de pipeline avec identifiant `csv/manual-upload/v1` pour préparer une future intégration connecteur
-
-### 3) Raffinement UI / UX
-
-- Dashboard plus premium avec sidebar, hero, cartes, hiérarchie visuelle et mini bar chart
-- Meilleure présentation responsive
-- États vides plus propres
-- Tableaux/listes remplacés par cartes denses et éditables
-- Esthétique moderne finance/patrimoine sans copier branding ni contenu tiers
+- dashboard patrimoine moderne
+- CRUD comptes / actifs / transactions / objectifs
+- import CSV avec preview
+- onboarding d’import plus guidé
+- validation API avec Zod
+- base Prisma + seed de démonstration
+- CI PR/push + workflow de déploiement dev/prod
 
 ## Démarrage local
 
@@ -71,7 +44,7 @@ Puis ouvrir `http://localhost:3000/login`
 
 ## Variables d'environnement
 
-### Dev rapide avec SQLite
+### Développement SQLite
 
 ```env
 DATABASE_URL="file:./dev.db"
@@ -96,11 +69,19 @@ npm run db:push:pg
 npm run db:seed
 ```
 
-## Format CSV attendu
+## Import CSV guidé
 
-### Comptes
+Le dashboard embarque désormais un flux d’onboarding plus propre:
 
-Colonnes recommandées:
+1. choisir le type de données à importer
+2. charger ou copier un modèle CSV
+3. coller/adapter le contenu
+4. lancer une preview avant import réel
+5. vérifier les erreurs éventuelles avant persistance
+
+### Formats attendus
+
+#### Comptes
 
 ```csv
 name,institution,type,balance,currency
@@ -114,9 +95,7 @@ Types acceptés:
 - `RETIREMENT`
 - `CREDIT`
 
-### Actifs
-
-Colonnes recommandées:
+#### Actifs
 
 ```csv
 name,category,value,cost_basis,performance_pct,account
@@ -131,11 +110,7 @@ Catégories acceptées:
 - `CRYPTO`
 - `OTHER`
 
-`account` doit correspondre au nom d’un compte existant si vous voulez rattacher l’actif.
-
-### Transactions
-
-Colonnes recommandées:
+#### Transactions
 
 ```csv
 label,amount,type,category,date,account,note
@@ -152,38 +127,14 @@ Formats de date recommandés:
 - `YYYY-MM-DD`
 - ISO datetime
 
-## Tester l’import CSV
-
-### Prévisualiser
-
-```bash
-curl -X POST http://localhost:3000/api/import/csv \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "entity":"transactions",
-    "dryRun":true,
-    "csv":"label,amount,type,category,date,account,note\nDividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel"
-  }'
-```
-
-### Importer réellement
-
-```bash
-curl -X POST http://localhost:3000/api/import/csv \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "entity":"transactions",
-    "dryRun":false,
-    "csv":"label,amount,type,category,date,account,note\nDividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel"
-  }'
-```
-
 ## Scripts utiles
 
 ```bash
 npm run dev
-npm run build
 npm run lint
+npm run test
+npm run build
+npm run check
 npm run db:generate
 npm run db:push
 npm run db:seed
@@ -191,28 +142,116 @@ npm run db:generate:pg
 npm run db:push:pg
 ```
 
-## Notes d’implémentation
+## Tests
 
-- En local, SQLite est utilisé par défaut pour éviter de dépendre d’une infra externe.
-- L’auth actuelle reste volontairement simple et pragmatique pour un MVP.
-- L’import CSV est un vrai flux utile, mais il ne gère pas encore le dédoublonnage ni la synchro incrémentale.
-- Le pipeline a été pensé pour accepter plus tard des connecteurs externes sans recasser les écrans.
+Tests ajoutés de façon pragmatique:
+
+- unitaires sur validation / normalisation de dates
+- unitaires sur parsing CSV
+- composant sur le flux d’onboarding CSV
+
+Lancer:
+
+```bash
+npm run test
+```
+
+Mode watch:
+
+```bash
+npm run test:watch
+```
+
+## CI/CD
+
+### CI
+
+Workflow: `.github/workflows/ci.yml`
+
+Déclenchement:
+- push sur `main` et `develop`
+- pull requests
+
+Étapes:
+- `npm ci`
+- `npm run db:generate`
+- `npm run lint`
+- `npm run test`
+- `npm run build`
+
+### Déploiement dev / prod
+
+Workflow: `.github/workflows/deploy.yml`
+
+Stratégie:
+- `develop` -> déploiement preview / development
+- `main` -> déploiement production
+- `workflow_dispatch` pour relancer manuellement preview ou production
+
+Le workflow est prêt pour Vercel via `npx vercel@latest`.
+
+### Secrets GitHub / Vercel à configurer
+
+Dans GitHub Actions:
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
+
+Dans l’environnement Vercel (preview et production selon besoin):
+- `DATABASE_URL`
+- `AUTH_SECRET`
+- `AUTH_URL`
+
+Recommandé côté GitHub:
+- environnements `development` et `production`
+- branch protection sur `main`
+- CI requise avant merge
+
+## Sécurité / dépendances
+
+Un nettoyage sûr des dépendances a été appliqué.
+
+### État actuel
+
+- `npm audit`: **0 vulnérabilité connue**
+- `next` mis à jour en `15.5.12`
+- `eslint-config-next` aligné en `15.5.12`
+
+### Ce qui reste à connaître
+
+Il ne reste pas de vulnérabilités `npm audit` dans ce lockfile, mais il reste des sujets produit/ops typiques MVP:
+- pas de MFA
+- pas de reset password
+- pas de déduplication d’import CSV
+- sécurité finale dépendante des secrets et de la plateforme d’hébergement
+
+Détail complémentaire: voir `docs/security.md`.
+
+## Vérifications réalisées
+
+Les commandes suivantes ont été validées dans ce repo:
+
+```bash
+npm run lint
+npm run test
+npm run build
+```
 
 ## Limites actuelles
 
-- Pas encore de connecteur bancaire réel
-- Pas de catégorisation intelligente ni de règles automatiques
-- Pas de gestion multi-devises avancée
-- Pas de détection de doublons à l’import
-- Les visuels sont premium/MVP mais pas encore au niveau d’un design system complet
+- pas de connecteur bancaire réel
+- pas de déduplication ni d’historique d’import
+- pas de multi-devises avancé
+- pas de design system complet
+- auth encore simple pour un MVP
 
-## Prochaines étapes recommandées
+## Prochaines étapes utiles
 
-- Déduplication et historique d’import
-- Onboarding et mapping interactif colonne par colonne
-- Catégories personnalisables
-- Audit logs, 2FA, reset password
-- Courbes historiques plus riches et suivi de valorisation dans le temps
+- mapping de colonnes interactif à l’import
+- déduplication / idempotence d’import
+- audit logs et rate limiting
+- reset password + MFA
+- courbes historiques plus riches
 
 ## Artefacts BMAD
 

@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { accountSchema, assetSchema, csvImportSchema, normalizeDateInput, transactionSchema } from '@/lib/validation';
 import { serializeAccount, serializeAsset, serializeTransaction } from '@/lib/serializers';
+export { csvTemplates } from '@/lib/import-config';
 
 function normalizeHeader(value: string) {
   return value.trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -42,7 +43,7 @@ export function parseCsv(input: string, delimiter = ',') {
     }
 
     result.push(current.trim());
-    return result.map((cell) => cell.replace(/^"|"$/g, '').trim());
+    return result.map((cell) => cell.trim());
   };
 
   const headers = splitLine(lines[0]).map(normalizeHeader);
@@ -173,8 +174,3 @@ export async function runCsvImport(input: unknown, userId: string) {
   return { inserted, errors, preview: preview.slice(0, 5), pipeline: 'csv/manual-upload/v1' };
 }
 
-export const csvTemplates = {
-  accounts: 'name,institution,type,balance,currency\nCompte courant,Banque Horizon,CHECKING,12540,EUR',
-  assets: 'name,category,value,cost_basis,performance_pct,account\nETF Monde,EQUITY,38800,36000,7.6,PEA long terme',
-  transactions: 'label,amount,type,category,date,account,note\nDividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel',
-};

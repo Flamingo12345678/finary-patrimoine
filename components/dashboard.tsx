@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Briefcase, Building2, CreditCard, Download, Landmark, Pencil, PieChart, Plus, Target, Trash2, TrendingUp, Upload, Wallet } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, Briefcase, Building2, CreditCard, Landmark, Pencil, PieChart, Plus, Target, Trash2, TrendingUp, Wallet } from 'lucide-react';
+import { CsvImportOnboarding } from '@/components/csv-import-onboarding';
 
 type Account = { id: string; name: string; institution: string; balance: number; currency: string; type: string };
 type Asset = { id: string; name: string; category: string; value: number; costBasis: number | null; performancePct: number | null; accountId: string | null };
@@ -320,37 +321,18 @@ export function Dashboard() {
             </section>
 
             <Panel title="Import CSV & synchronisation" subtitle="Flux exploitable pour comptes, actifs et transactions">
-              <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-                <div className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50 p-5">
-                  <Select label="Jeu à importer" value={importEntity} onChange={(value) => setImportEntity(value as ImportEntity)} options={[{ label: 'Transactions', value: 'transactions' }, { label: 'Comptes', value: 'accounts' }, { label: 'Actifs', value: 'assets' }]} />
-                  <label className="block text-sm font-medium text-slate-600">CSV brut
-                    <textarea value={csvText} onChange={(event) => setCsvText(event.target.value)} className="mt-2 h-64 w-full rounded-3xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-700 shadow-inner outline-none transition focus:border-teal-400 focus:ring-4 focus:ring-teal-100" />
-                  </label>
-                  <div className="flex flex-wrap gap-3">
-                    <button onClick={() => runImport(true)} className="btn-primary"><Upload className="h-4 w-4" /> Prévisualiser</button>
-                    <button onClick={() => runImport(false)} className="btn-secondary"><Download className="h-4 w-4" /> Importer en base</button>
-                  </div>
-                  <p className="text-xs leading-5 text-slate-500">Détection simple de `,` ou `;`, mapping de colonnes usuelles, persistance en base et pipeline identifié en `csv/manual-upload/v1` pour faire évoluer la synchro plus tard.</p>
-                </div>
-                <div className="space-y-4">
-                  {importPreview ? <div className="rounded-[28px] border border-slate-200 bg-white p-5">
-                    <div className="flex flex-wrap items-center gap-3"><span className="rounded-full bg-teal-50 px-3 py-1 text-sm text-teal-700">Pipeline {importPreview.pipeline}</span><span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600">{importPreview.inserted} ligne(s) insérées</span><span className="rounded-full bg-amber-50 px-3 py-1 text-sm text-amber-700">{importPreview.errors.length} erreur(s)</span></div>
-                    <div className="mt-4 rounded-3xl bg-slate-50 p-4">
-                      <p className="text-sm font-medium text-slate-700">Aperçu</p>
-                      <pre className="mt-3 overflow-auto rounded-2xl bg-slate-950 p-4 text-xs text-slate-100">{JSON.stringify(importPreview.preview, null, 2)}</pre>
-                    </div>
-                    {importPreview.errors.length > 0 ? <div className="mt-4 space-y-2">{importPreview.errors.map((issue) => <div key={`${issue.row}-${issue.message}`} className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">Ligne {issue.row}: {issue.message}</div>)}</div> : null}
-                  </div> : <EmptyState title="Prévisualisation vide" description="Lancez une preview avant import pour contrôler le mapping et les erreurs éventuelles." />}
-                  <div className="rounded-[28px] border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-500">
-                    <p className="font-medium text-slate-700">Formats attendus</p>
-                    <ul className="mt-3 list-disc space-y-2 pl-5">
-                      <li>Accounts: <code>name,institution,type,balance,currency</code></li>
-                      <li>Assets: <code>name,category,value,cost_basis,performance_pct,account</code></li>
-                      <li>Transactions: <code>label,amount,type,category,date,account,note</code></li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+              <CsvImportOnboarding
+                entity={importEntity}
+                csvText={csvText}
+                preview={importPreview}
+                savingKey={saving}
+                onEntityChange={(value) => {
+                  setImportEntity(value);
+                  setImportPreview(null);
+                }}
+                onCsvTextChange={setCsvText}
+                onRun={runImport}
+              />
             </Panel>
           </div>
         </div>
