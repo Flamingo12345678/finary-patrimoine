@@ -144,13 +144,14 @@ export async function runCsvImport(input: unknown, userId: string) {
       try {
         const ownerUserId = await resolveOwnerUserId(household.id, row, baseScope.ownerUserId ?? userId, parsed.view);
         const visibility = row.visibility?.toUpperCase() === 'SHARED' ? 'SHARED' : ownerUserId ? 'PERSONAL' : 'SHARED';
-        const mapped = accountSchema.parse({
+        const parsedAccount = accountSchema.parse({
           name: row.name || row.account_name,
           institution: row.institution || row.bank || row.provider,
           type: row.type,
           balance: parseDecimal(row.balance || row.amount),
           currency: row.currency || 'EUR',
         });
+        const { view: _view, ...mapped } = parsedAccount;
         const key = dedupeKey('account', { ...row, ownerUserId, visibility });
         if (seen.has(key)) continue;
         seen.add(key);
@@ -177,7 +178,7 @@ export async function runCsvImport(input: unknown, userId: string) {
         const ownerUserId = await resolveOwnerUserId(household.id, row, baseScope.ownerUserId ?? userId, parsed.view);
         const visibility = row.visibility?.toUpperCase() === 'SHARED' ? 'SHARED' : ownerUserId ? 'PERSONAL' : 'SHARED';
         const accountId = await resolveAccountId(household.id, row);
-        const mapped = assetSchema.parse({
+        const parsedAsset = assetSchema.parse({
           accountId,
           name: row.name || row.asset_name,
           category: row.category,
@@ -185,6 +186,7 @@ export async function runCsvImport(input: unknown, userId: string) {
           costBasis: row.cost_basis ? parseDecimal(row.cost_basis) : null,
           performancePct: row.performance_pct ? parseDecimal(row.performance_pct) : null,
         });
+        const { view: _view, ...mapped } = parsedAsset;
         const key = dedupeKey('asset', { ...row, accountId, ownerUserId, visibility });
         if (seen.has(key)) continue;
         seen.add(key);
@@ -211,7 +213,7 @@ export async function runCsvImport(input: unknown, userId: string) {
         const ownerUserId = await resolveOwnerUserId(household.id, row, baseScope.ownerUserId ?? userId, parsed.view);
         const visibility = row.visibility?.toUpperCase() === 'SHARED' ? 'SHARED' : ownerUserId ? 'PERSONAL' : 'SHARED';
         const accountId = await resolveAccountId(household.id, row);
-        const mapped = transactionSchema.parse({
+        const parsedTransaction = transactionSchema.parse({
           accountId,
           label: row.label || row.description,
           amount: parseDecimal(row.amount),
@@ -220,6 +222,7 @@ export async function runCsvImport(input: unknown, userId: string) {
           occurredAt: row.occurred_at || row.date,
           note: row.note || null,
         });
+        const { view: _view, ...mapped } = parsedTransaction;
         const key = dedupeKey('transaction', { ...row, accountId, ownerUserId, visibility });
         if (seen.has(key)) continue;
         seen.add(key);
