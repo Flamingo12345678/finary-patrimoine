@@ -4,13 +4,32 @@ export type ViewMode = 'me' | 'shared' | 'household';
 export const DEFAULT_VIEW: ViewMode = 'household';
 
 export async function getActiveHousehold(userId: string) {
-  const membership = await prisma.householdMember.findFirst({
+  let membership = await prisma.householdMember.findFirst({
     where: { userId },
     include: { household: { include: { members: { include: { user: true } } } } },
     orderBy: { createdAt: 'asc' },
   });
 
-  if (!membership) throw new Error('Aucun foyer associé à ce compte.');
+  if (!membership) {
+    const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true, email: true } });
+    if (!user) throw new Error('Utilisateur introuvable.');
+
+    const household = await prisma.household.create({
+      data: {
+        name: user.name?.trim() ? `Foyer ${user.name.split(' ')[0]}` : `Foyer ${user.email.split('@')[0]}`,
+        members: {
+          create: {
+            userId: user.id,
+            role: 'owner',
+          },
+        },
+      },
+      include: { members: { include: { user: true } } },
+    });
+
+    return household;
+  }
+
   return membership.household;
 }
 

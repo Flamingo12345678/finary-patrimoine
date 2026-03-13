@@ -4,7 +4,7 @@ set -eu
 echo "[entrypoint] Prisma generate (PostgreSQL schema)"
 npx prisma generate --schema prisma/schema.postgresql.prisma
 
-if [ "${PRISMA_FORCE_RESET_ON_START:-true}" = "true" ]; then
+if [ "${PRISMA_FORCE_RESET_ON_START:-false}" = "true" ]; then
   echo "[entrypoint] Prisma db push --force-reset"
   npx prisma db push --schema prisma/schema.postgresql.prisma --skip-generate --force-reset
 else
