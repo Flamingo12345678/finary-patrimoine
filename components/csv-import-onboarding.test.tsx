@@ -16,10 +16,13 @@ describe('CsvImportOnboarding', () => {
     render(
       <CsvImportOnboarding
         entity="transactions"
+        format="csv"
+        view="household"
         csvText=""
         preview={null}
         savingKey={null}
         onEntityChange={onEntityChange}
+        onFormatChange={vi.fn()}
         onCsvTextChange={onCsvTextChange}
         onRun={vi.fn()}
       />,
@@ -28,7 +31,7 @@ describe('CsvImportOnboarding', () => {
     await user.click(screen.getByRole('button', { name: /comptes/i }));
     expect(onEntityChange).toHaveBeenCalledWith('accounts');
 
-    await user.click(screen.getByRole('button', { name: /charger l’exemple/i }));
+    await user.click(screen.getByRole('button', { name: /charger un exemple/i }));
     expect(onCsvTextChange).toHaveBeenCalledWith(expect.stringContaining('label,amount,type'));
   });
 
@@ -39,10 +42,13 @@ describe('CsvImportOnboarding', () => {
     render(
       <CsvImportOnboarding
         entity="transactions"
+        format="csv"
+        view="household"
         csvText="label,amount,type"
         preview={null}
         savingKey={null}
         onEntityChange={vi.fn()}
+        onFormatChange={vi.fn()}
         onCsvTextChange={vi.fn()}
         onRun={onRun}
       />,

@@ -66,7 +66,7 @@ export default function SignupPage() {
               <UserPlus className="h-4 w-4" /> Création de compte sécurisée
             </p>
             <h1 className="text-4xl font-semibold leading-tight sm:text-6xl">Créez votre espace patrimoine en quelques secondes.</h1>
-            <p className="mt-6 max-w-2xl text-lg text-slate-300">Inscription par email + mot de passe hashé, session Auth.js, base Prisma/PostgreSQL compatible avec la stack existante.</p>
+            <p className="mt-6 max-w-2xl text-lg text-slate-300">Inscription par email + mot de passe hashé, session Auth.js et création automatique d’un foyer personnel prêt à partager ensuite.</p>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {['Hash bcrypt', 'Validation Zod', 'Connexion directe après signup'].map((item) => (
                 <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-200">{item}</div>

@@ -7,6 +7,11 @@ export const accountTypes = ['CHECKING', 'SAVINGS', 'INVESTMENT', 'RETIREMENT', 
 export const assetCategories = ['CASH', 'EQUITY', 'BOND', 'REAL_ESTATE', 'CRYPTO', 'OTHER'] as const;
 export const transactionTypes = ['INCOME', 'EXPENSE', 'TRANSFER', 'INVESTMENT'] as const;
 export const importEntities = ['accounts', 'assets', 'transactions'] as const;
+export const viewModes = ['me', 'shared', 'household'] as const;
+export const visibilityScopes = ['PERSONAL', 'SHARED'] as const;
+
+const viewModeSchema = z.enum(viewModes).default('household');
+const visibilitySchema = z.enum(visibilityScopes).default('PERSONAL');
 
 export const accountSchema = z.object({
   name: z.string().trim().min(2, 'Nom trop court').max(120),
@@ -14,6 +19,8 @@ export const accountSchema = z.object({
   type: z.enum(accountTypes),
   balance: z.coerce.number().finite(),
   currency: z.string().trim().min(3).max(8).default('EUR'),
+  view: viewModeSchema.optional(),
+  visibility: visibilitySchema.optional(),
 });
 
 export const accountUpdateSchema = accountSchema.partial().refine((value) => Object.keys(value).length > 0, 'Aucune donnée à mettre à jour');
@@ -25,6 +32,8 @@ export const assetSchema = z.object({
   value: z.coerce.number().finite(),
   costBasis: z.coerce.number().finite().optional().nullable(),
   performancePct: z.coerce.number().finite().optional().nullable(),
+  view: viewModeSchema.optional(),
+  visibility: visibilitySchema.optional(),
 });
 
 export const assetUpdateSchema = assetSchema.partial().refine((value) => Object.keys(value).length > 0, 'Aucune donnée à mettre à jour');
@@ -37,6 +46,8 @@ export const transactionSchema = z.object({
   category: z.string().trim().min(2).max(80),
   occurredAt: z.string().trim().min(1),
   note: optionalText,
+  view: viewModeSchema.optional(),
+  visibility: visibilitySchema.optional(),
 });
 
 export const transactionUpdateSchema = transactionSchema.partial().refine((value) => Object.keys(value).length > 0, 'Aucune donnée à mettre à jour');
@@ -46,15 +57,19 @@ export const goalSchema = z.object({
   target: z.coerce.number().positive(),
   current: z.coerce.number().min(0),
   deadline: optionalText,
+  view: viewModeSchema.optional(),
+  visibility: visibilitySchema.optional(),
 });
 
 export const goalUpdateSchema = goalSchema.partial().refine((value) => Object.keys(value).length > 0, 'Aucune donnée à mettre à jour');
 
 export const csvImportSchema = z.object({
   entity: z.enum(importEntities),
+  format: z.enum(['csv', 'ofx', 'qif']).default('csv'),
   delimiter: z.enum([',', ';']).default(','),
   dryRun: z.coerce.boolean().default(true),
   rows: z.array(z.record(z.string(), z.string())).min(1, 'CSV vide'),
+  view: viewModeSchema.default('household'),
 });
 
 export function normalizeDateInput(value: string) {

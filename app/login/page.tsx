@@ -72,7 +72,7 @@ function LoginPageContent() {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-2xl font-semibold">Connexion</h2>
-                <p className="mt-2 text-sm text-slate-300">Compte de démo seedé automatiquement en dev.</p>
+                <p className="mt-2 text-sm text-slate-300">Deux comptes de démo seedés automatiquement dans le même foyer.</p>
               </div>
               <Link href="/signup" className="rounded-2xl border border-white/10 px-4 py-2 text-sm text-teal-200 hover:bg-white/5">Créer un compte</Link>
             </div>
@@ -90,9 +90,9 @@ function LoginPageContent() {
               <button disabled={pending} className="w-full rounded-2xl bg-teal-500 px-4 py-3 font-medium text-slate-950 transition hover:bg-teal-400 disabled:opacity-60">{pending ? 'Connexion…' : 'Entrer dans le dashboard'}</button>
             </form>
             <div className="mt-6 rounded-2xl bg-slate-900/70 p-4 text-sm text-slate-300">
-              <p className="font-medium text-white">Démo</p>
-              <p>camille@example.com</p>
-              <p>demo1234</p>
+              <p className="font-medium text-white">Démo foyer</p>
+              <p>camille@example.com / demo1234</p>
+              <p>lea@example.com / demo1234</p>
             </div>
             <p className="mt-4 text-sm text-slate-400">Retour à <Link href="/" className="text-teal-300 hover:text-teal-200">l’accueil</Link>.</p>
           </div>

@@ -32,6 +32,16 @@ export async function POST(request: Request) {
         email,
         name,
         passwordHash,
+        householdMemberships: {
+          create: {
+            role: 'owner',
+            household: {
+              create: {
+                name: `Foyer ${name.split(' ')[0]}`,
+              },
+            },
+          },
+        },
       },
       select: {
         id: true,

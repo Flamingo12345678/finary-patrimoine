@@ -31,21 +31,51 @@ enum TransactionType {
   INVESTMENT
 }
 
+enum VisibilityScope {
+  PERSONAL
+  SHARED
+}
+
 model User {
-  id            String        @id @default(cuid())
-  name          String?
-  email         String        @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String?
-  accounts      Account[]
-  assets        Asset[]
-  transactions  Transaction[]
-  goals         Goal[]
-  sessions      Session[]
-  authAccounts  AuthAccount[]
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id                  String              @id @default(cuid())
+  name                String?
+  email               String              @unique
+  emailVerified       DateTime?
+  image               String?
+  passwordHash        String?
+  ownedAccounts       Account[]           @relation("OwnedAccounts")
+  ownedAssets         Asset[]             @relation("OwnedAssets")
+  ownedTransactions   Transaction[]       @relation("OwnedTransactions")
+  ownedGoals          Goal[]              @relation("OwnedGoals")
+  sessions            Session[]
+  authAccounts        AuthAccount[]
+  householdMemberships HouseholdMember[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+}
+
+model Household {
+  id           String            @id @default(cuid())
+  name         String
+  members      HouseholdMember[]
+  accounts     Account[]
+  assets       Asset[]
+  transactions Transaction[]
+  goals        Goal[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model HouseholdMember {
+  id          String    @id @default(cuid())
+  householdId String
+  userId      String
+  role        String    @default("member")
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+
+  @@unique([householdId, userId])
 }
 
 model AuthAccount {
@@ -84,59 +114,73 @@ model VerificationToken {
 }
 
 model Account {
-  id           String        @id @default(cuid())
-  userId       String
+  id           String          @id @default(cuid())
+  householdId  String
+  ownerUserId  String?
+  visibility   VisibilityScope @default(PERSONAL)
   name         String
   institution  String
-  balance      Decimal      
-  currency     String        @default("EUR")
+  balance      Decimal
+  currency     String          @default("EUR")
   type         AccountType
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  household    Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerUser    User?           @relation("OwnedAccounts", fields: [ownerUserId], references: [id], onDelete: SetNull)
   assets       Asset[]
   transactions Transaction[]
 }
 
 model Asset {
-  id             String        @id @default(cuid())
-  userId         String
+  id             String          @id @default(cuid())
+  householdId    String
+  ownerUserId    String?
   accountId      String?
+  visibility     VisibilityScope @default(PERSONAL)
   name           String
   category       AssetCategory
-  value          Decimal      
-  costBasis      Decimal?     
-  performancePct Decimal?     
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  account        Account?      @relation(fields: [accountId], references: [id], onDelete: SetNull)
+  value          Decimal
+  costBasis      Decimal?
+  performancePct Decimal?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  household      Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerUser      User?           @relation("OwnedAssets", fields: [ownerUserId], references: [id], onDelete: SetNull)
+  account        Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
 }
 
 model Transaction {
   id          String          @id @default(cuid())
-  userId      String
+  householdId String
+  ownerUserId String?
   accountId   String?
+  visibility  VisibilityScope @default(PERSONAL)
   label       String
-  amount      Decimal        
+  amount      Decimal
   type        TransactionType
   category    String
   occurredAt  DateTime
   note        String?
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerUser   User?           @relation("OwnedTransactions", fields: [ownerUserId], references: [id], onDelete: SetNull)
   account     Account?        @relation(fields: [accountId], references: [id], onDelete: SetNull)
+
+  @@index([householdId, occurredAt])
 }
 
 model Goal {
-  id          String   @id @default(cuid())
-  userId      String
+  id          String          @id @default(cuid())
+  householdId String
+  ownerUserId String?
+  visibility  VisibilityScope @default(PERSONAL)
   name        String
-  target      Decimal 
-  current     Decimal 
+  target      Decimal
+  current     Decimal
   deadline    DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  ownerUser   User?           @relation("OwnedGoals", fields: [ownerUserId], references: [id], onDelete: SetNull)
 }
