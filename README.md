@@ -69,6 +69,66 @@ npm run db:push:pg
 npm run db:seed
 ```
 
+
+## Docker Compose local
+
+Objectif: lancer l’app Next.js avec PostgreSQL local persistant, sans casser le mode SQLite existant hors Docker.
+
+### Lancement
+
+```bash
+cp .env.docker.example .env.docker
+# optionnel: générer un vrai secret
+openssl rand -base64 32
+# puis remplacer AUTH_SECRET dans .env.docker
+
+docker compose up -d --build
+```
+
+Puis ouvrir `http://localhost:3001/login`
+
+### Arrêt / reset
+
+```bash
+docker compose down
+docker compose down -v   # supprime aussi le volume PostgreSQL
+```
+
+### Logs utiles
+
+```bash
+docker compose logs -f app
+docker compose logs -f db
+```
+
+### Commandes Prisma dans Docker
+
+```bash
+docker compose exec app npx prisma db push --schema prisma/schema.postgresql.prisma
+docker compose exec app npm run db:seed
+docker compose exec app npx prisma studio --browser none --port 5555
+```
+
+### Variables Docker
+
+Fichier: `.env.docker`
+
+- `APP_PORT=3001`
+- `POSTGRES_PORT=5432`
+- `POSTGRES_DB=finary_patrimoine`
+- `POSTGRES_USER=postgres`
+- `POSTGRES_PASSWORD=postgres`
+- `AUTH_URL=http://localhost:3001`
+- `AUTH_SECRET=...`
+- `PRISMA_SEED_ON_START=true`
+
+### Notes d’implémentation
+
+- hors Docker, le projet reste en SQLite par défaut via `.env`
+- en Docker, l’entrypoint applique `prisma db push` sur `prisma/schema.postgresql.prisma`
+- le seed de démo est exécuté au démarrage tant que `PRISMA_SEED_ON_START=true`
+- les données PostgreSQL sont persistées dans le volume Docker `postgres_data`
+
 ## Import CSV guidé
 
 Le dashboard embarque désormais un flux d’onboarding plus propre:
