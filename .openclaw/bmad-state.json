@@ -1,0 +1,77 @@
+{
+  "track": "standard",
+  "phase": "planning",
+  "currentWorkflow": "create-ux-design",
+  "completedWorkflows": [
+    "create-product-brief",
+    "create-prd",
+    "create-architecture",
+    "create-ux-design"
+  ],
+  "artifactIndex": {
+    "create-product-brief": "docs/bmad/brief.md",
+    "create-prd": "docs/bmad/prd.md",
+    "create-architecture": "docs/bmad/architecture.md",
+    "create-ux-design": "docs/bmad/ux.md"
+  },
+  "workflowRuns": [
+    {
+      "workflowId": "create-product-brief",
+      "status": "started",
+      "startedAt": "2026-03-13T07:52:25.761Z"
+    },
+    {
+      "workflowId": "create-product-brief",
+      "status": "completed",
+      "completedAt": "2026-03-13T07:56:44.641Z",
+      "artifact": "docs/bmad/brief.md"
+    },
+    {
+      "workflowId": "create-prd",
+      "status": "started",
+      "startedAt": "2026-03-13T07:56:44.653Z"
+    },
+    {
+      "workflowId": "create-prd",
+      "status": "completed",
+      "completedAt": "2026-03-13T07:56:44.661Z",
+      "artifact": "docs/bmad/prd.md"
+    },
+    {
+      "workflowId": "create-architecture",
+      "status": "completed",
+      "completedAt": "2026-03-13T07:56:44.669Z",
+      "artifact": "docs/bmad/architecture.md"
+    },
+    {
+      "workflowId": "create-ux-design",
+      "status": "completed",
+      "completedAt": "2026-03-13T07:56:48.979Z",
+      "artifact": "docs/bmad/ux.md"
+    }
+  ],
+  "reviewGates": [],
+  "stepState": {
+    "create-product-brief": {
+      "currentStep": 0,
+      "steps": [
+        "step-01-init.md",
+        "step-01b-continue.md",
+        "step-02-vision.md",
+        "step-03-users.md",
+        "step-04-metrics.md",
+        "step-05-scope.md",
+        "step-06-complete.md"
+      ],
+      "lastLoadedAt": "2026-03-13T07:53:06.893Z"
+    },
+    "create-prd": {
+      "currentStep": 0
+    }
+  },
+  "upstream": {
+    "repo": "bmad-code-org/BMAD-METHOD",
+    "ref": "main",
+    "path": "/tmp/bmad-cache/BMAD-METHOD"
+  }
+}
