@@ -1,13 +1,12 @@
 import { prisma } from '@/lib/prisma';
-
-const toNumber = (value: { toNumber(): number } | number | null | undefined) => (typeof value === 'number' ? value : value?.toNumber() ?? 0);
+import { serializeAccount, serializeAsset, serializeGoal, serializeTransaction, toNumber } from '@/lib/serializers';
 
 export async function getDashboardData(userId: string) {
   const [accounts, assets, transactions, goals] = await Promise.all([
     prisma.account.findMany({ where: { userId }, orderBy: { balance: 'desc' } }),
     prisma.asset.findMany({ where: { userId }, orderBy: { value: 'desc' } }),
     prisma.transaction.findMany({ where: { userId }, orderBy: { occurredAt: 'desc' }, take: 10 }),
-    prisma.goal.findMany({ where: { userId }, orderBy: { deadline: 'asc' } }),
+    prisma.goal.findMany({ where: { userId }, orderBy: [{ deadline: 'asc' }, { createdAt: 'desc' }] }),
   ]);
 
   const netWorth = accounts.reduce((sum, account) => sum + toNumber(account.balance), 0) + assets.reduce((sum, asset) => sum + toNumber(asset.value), 0);
@@ -26,11 +25,18 @@ export async function getDashboardData(userId: string) {
   }));
 
   return {
-    summary: { netWorth, monthlyFlow, accountCount: accounts.length, goalCount: goals.length },
-    accounts: accounts.map((account) => ({ ...account, balance: toNumber(account.balance) })),
-    assets: assets.map((asset) => ({ ...asset, value: toNumber(asset.value), costBasis: toNumber(asset.costBasis), performancePct: toNumber(asset.performancePct) })),
-    transactions: transactions.map((tx) => ({ ...tx, amount: toNumber(tx.amount) })),
-    goals: goals.map((goal) => ({ ...goal, target: toNumber(goal.target), current: toNumber(goal.current) })),
+    summary: {
+      netWorth,
+      monthlyFlow,
+      accountCount: accounts.length,
+      goalCount: goals.length,
+      assetCount: assets.length,
+      transactionCount: transactions.length,
+    },
+    accounts: accounts.map(serializeAccount),
+    assets: assets.map(serializeAsset),
+    transactions: transactions.map(serializeTransaction),
+    goals: goals.map(serializeGoal),
     allocation,
   };
 }

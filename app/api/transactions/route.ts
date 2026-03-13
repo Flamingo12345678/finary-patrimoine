@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { transactionSchema } from '@/lib/validation';
+import { handleApiError, jsonError, requireUserId } from '@/lib/http';
+import { serializeTransaction } from '@/lib/serializers';
+import { normalizeDateInput, transactionSchema } from '@/lib/validation';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await requireUserId();
+  if (!userId) return jsonError('Unauthorized', 401);
 
-  const transactions = await prisma.transaction.findMany({ where: { userId: session.user.id }, orderBy: { occurredAt: 'desc' }, take: 50 });
-  return NextResponse.json(transactions.map((tx) => ({ ...tx, amount: tx.amount.toNumber() })));
+  const transactions = await prisma.transaction.findMany({ where: { userId }, orderBy: { occurredAt: 'desc' }, take: 50 });
+  return NextResponse.json(transactions.map(serializeTransaction));
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const userId = await requireUserId();
+    if (!userId) return jsonError('Unauthorized', 401);
 
-  const parsed = transactionSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const transaction = await prisma.transaction.create({ data: { ...parsed.data, occurredAt: new Date(parsed.data.occurredAt), userId: session.user.id } });
-  return NextResponse.json({ ...transaction, amount: transaction.amount.toNumber() }, { status: 201 });
+    const parsed = transactionSchema.parse(await request.json());
+    const transaction = await prisma.transaction.create({ data: { ...parsed, occurredAt: normalizeDateInput(parsed.occurredAt), userId } });
+    return NextResponse.json(serializeTransaction(transaction), { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

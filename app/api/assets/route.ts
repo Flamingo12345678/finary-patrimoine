@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { assetSchema } from '@/lib/validation';
+import { handleApiError, jsonError, requireUserId } from '@/lib/http';
+import { serializeAsset } from '@/lib/serializers';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await requireUserId();
+  if (!userId) return jsonError('Unauthorized', 401);
 
-  const assets = await prisma.asset.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' } });
-  return NextResponse.json(assets.map((asset) => ({ ...asset, value: asset.value.toNumber(), costBasis: asset.costBasis?.toNumber() ?? null, performancePct: asset.performancePct?.toNumber() ?? null })));
+  const assets = await prisma.asset.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  return NextResponse.json(assets.map(serializeAsset));
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const userId = await requireUserId();
+    if (!userId) return jsonError('Unauthorized', 401);
 
-  const parsed = assetSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const asset = await prisma.asset.create({ data: { ...parsed.data, userId: session.user.id } });
-  return NextResponse.json({ ...asset, value: asset.value.toNumber(), costBasis: asset.costBasis?.toNumber() ?? null, performancePct: asset.performancePct?.toNumber() ?? null }, { status: 201 });
+    const parsed = assetSchema.parse(await request.json());
+    const asset = await prisma.asset.create({ data: { ...parsed, userId } });
+    return NextResponse.json(serializeAsset(asset), { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

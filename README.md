@@ -1,6 +1,8 @@
 # Finary Patrimoine
 
-MVP web moderne de suivi patrimonial inspiré des usages wealth-tech, avec backend réel, authentification et persistance Prisma.
+MVP web moderne de suivi patrimonial inspiré des usages wealth-tech, avec backend réel, authentification, persistance Prisma, CRUD complet et import CSV exploitable.
+
+Repo: https://github.com/Flamingo12345678/finary-patrimoine
 
 ## Stack
 
@@ -9,22 +11,46 @@ MVP web moderne de suivi patrimonial inspiré des usages wealth-tech, avec backe
 - Tailwind CSS
 - Prisma ORM
 - Auth.js / NextAuth v5 (Credentials)
-- PostgreSQL visé en production, SQLite accepté pour le dev local
+- SQLite en dev local, PostgreSQL visé en production
 
 ## Ce qui a été ajouté
 
-- Authentification crédible avec Auth.js et sessions persistées en base
-- Schéma Prisma complet pour `User`, `AuthAccount`, `Session`, `VerificationToken`, `Account`, `Asset`, `Transaction`, `Goal`
-- Seed de démonstration avec un utilisateur et des données patrimoniales
-- Routes API App Router sécurisées:
+### 1) CRUD complet
+
+- Endpoints sécurisés avec validation Zod pour:
   - `GET/POST /api/accounts`
   - `GET/POST /api/assets`
   - `GET/POST /api/transactions`
   - `GET/POST /api/goals`
-  - `GET /api/dashboard`
-- Dashboard alimenté par l'API au lieu de mocks statiques
-- Page de login réelle via Auth.js credentials
-- Documentation de setup dev et de bascule vers PostgreSQL
+  - `PATCH/DELETE /api/accounts/:id`
+  - `PATCH/DELETE /api/assets/:id`
+  - `PATCH/DELETE /api/transactions/:id`
+  - `PATCH/DELETE /api/goals/:id`
+- UI de création, édition et suppression directement dans le dashboard
+- Validation et messages d’erreur propres côté API
+
+### 2) Import / sync patrimonial
+
+- Route `GET/POST /api/import/csv`
+- Import CSV pour:
+  - comptes
+  - actifs
+  - transactions
+- Parsing robuste sans dépendance lourde:
+  - support `,` et `;`
+  - gestion simple des guillemets
+  - normalisation d’en-têtes
+  - mapping de colonnes usuelles
+- Preview avant import (`dryRun`) puis persistance en base
+- Abstraction légère de pipeline avec identifiant `csv/manual-upload/v1` pour préparer une future intégration connecteur
+
+### 3) Raffinement UI / UX
+
+- Dashboard plus premium avec sidebar, hero, cartes, hiérarchie visuelle et mini bar chart
+- Meilleure présentation responsive
+- États vides plus propres
+- Tableaux/listes remplacés par cartes denses et éditables
+- Esthétique moderne finance/patrimoine sans copier branding ni contenu tiers
 
 ## Démarrage local
 
@@ -61,13 +87,95 @@ AUTH_SECRET="change-me"
 AUTH_URL="http://localhost:3000"
 ```
 
-Pour basculer proprement sur PostgreSQL, utiliser le schéma dédié fourni dans le repo:
+Pour basculer vers PostgreSQL:
 
 ```bash
 cp prisma/schema.postgresql.prisma prisma/schema.prisma
 npm run db:generate:pg
 npm run db:push:pg
 npm run db:seed
+```
+
+## Format CSV attendu
+
+### Comptes
+
+Colonnes recommandées:
+
+```csv
+name,institution,type,balance,currency
+Compte courant,Banque Horizon,CHECKING,12540,EUR
+```
+
+Types acceptés:
+- `CHECKING`
+- `SAVINGS`
+- `INVESTMENT`
+- `RETIREMENT`
+- `CREDIT`
+
+### Actifs
+
+Colonnes recommandées:
+
+```csv
+name,category,value,cost_basis,performance_pct,account
+ETF Monde,EQUITY,38800,36000,7.6,PEA long terme
+```
+
+Catégories acceptées:
+- `CASH`
+- `EQUITY`
+- `BOND`
+- `REAL_ESTATE`
+- `CRYPTO`
+- `OTHER`
+
+`account` doit correspondre au nom d’un compte existant si vous voulez rattacher l’actif.
+
+### Transactions
+
+Colonnes recommandées:
+
+```csv
+label,amount,type,category,date,account,note
+Dividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel
+```
+
+Types acceptés:
+- `INCOME`
+- `EXPENSE`
+- `TRANSFER`
+- `INVESTMENT`
+
+Formats de date recommandés:
+- `YYYY-MM-DD`
+- ISO datetime
+
+## Tester l’import CSV
+
+### Prévisualiser
+
+```bash
+curl -X POST http://localhost:3000/api/import/csv \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "entity":"transactions",
+    "dryRun":true,
+    "csv":"label,amount,type,category,date,account,note\nDividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel"
+  }'
+```
+
+### Importer réellement
+
+```bash
+curl -X POST http://localhost:3000/api/import/csv \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "entity":"transactions",
+    "dryRun":false,
+    "csv":"label,amount,type,category,date,account,note\nDividendes,126,INCOME,Revenu,2026-03-02,PEA long terme,Paiement trimestriel"
+  }'
 ```
 
 ## Scripts utiles
@@ -83,18 +191,28 @@ npm run db:generate:pg
 npm run db:push:pg
 ```
 
-## Notes d'implémentation
+## Notes d’implémentation
 
-- En local, SQLite est utilisé par défaut pour éviter de bloquer si PostgreSQL n'est pas dispo sur la machine.
-- Le schéma Prisma reste compatible PostgreSQL et c'est la cible recommandée pour un environnement sérieux.
-- L'auth actuelle est volontairement simple et pragmatique: provider credentials + hash bcrypt + session DB. C'est solide pour un MVP, mais pas encore du niveau produit final bancaire.
+- En local, SQLite est utilisé par défaut pour éviter de dépendre d’une infra externe.
+- L’auth actuelle reste volontairement simple et pragmatique pour un MVP.
+- L’import CSV est un vrai flux utile, mais il ne gère pas encore le dédoublonnage ni la synchro incrémentale.
+- Le pipeline a été pensé pour accepter plus tard des connecteurs externes sans recasser les écrans.
+
+## Limites actuelles
+
+- Pas encore de connecteur bancaire réel
+- Pas de catégorisation intelligente ni de règles automatiques
+- Pas de gestion multi-devises avancée
+- Pas de détection de doublons à l’import
+- Les visuels sont premium/MVP mais pas encore au niveau d’un design system complet
 
 ## Prochaines étapes recommandées
 
-- Ajout des `PATCH/DELETE` sur les endpoints
-- Gestion fine des catégories, devises et multi-utilisateur admin
-- Import bancaire / synchronisation externe
-- 2FA, reset password, onboarding et audit logs
+- Déduplication et historique d’import
+- Onboarding et mapping interactif colonne par colonne
+- Catégories personnalisables
+- Audit logs, 2FA, reset password
+- Courbes historiques plus riches et suivi de valorisation dans le temps
 
 ## Artefacts BMAD
 

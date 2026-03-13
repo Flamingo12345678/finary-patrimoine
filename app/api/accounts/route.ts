@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { accountSchema } from '@/lib/validation';
+import { handleApiError, jsonError, requireUserId } from '@/lib/http';
+import { serializeAccount } from '@/lib/serializers';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await requireUserId();
+  if (!userId) return jsonError('Unauthorized', 401);
 
-  const accounts = await prisma.account.findMany({ where: { userId: session.user.id }, orderBy: { createdAt: 'desc' } });
-  return NextResponse.json(accounts.map((account) => ({ ...account, balance: account.balance.toNumber() })));
+  const accounts = await prisma.account.findMany({ where: { userId }, orderBy: { createdAt: 'desc' } });
+  return NextResponse.json(accounts.map(serializeAccount));
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const userId = await requireUserId();
+    if (!userId) return jsonError('Unauthorized', 401);
 
-  const parsed = accountSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const account = await prisma.account.create({ data: { ...parsed.data, userId: session.user.id } });
-  return NextResponse.json({ ...account, balance: account.balance.toNumber() }, { status: 201 });
+    const parsed = accountSchema.parse(await request.json());
+    const account = await prisma.account.create({ data: { ...parsed, userId } });
+    return NextResponse.json(serializeAccount(account), { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

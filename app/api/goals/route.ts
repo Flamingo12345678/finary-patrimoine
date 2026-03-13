@@ -1,23 +1,26 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { goalSchema } from '@/lib/validation';
+import { goalSchema, normalizeDateInput } from '@/lib/validation';
+import { handleApiError, jsonError, requireUserId } from '@/lib/http';
+import { serializeGoal } from '@/lib/serializers';
 
 export async function GET() {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  const userId = await requireUserId();
+  if (!userId) return jsonError('Unauthorized', 401);
 
-  const goals = await prisma.goal.findMany({ where: { userId: session.user.id }, orderBy: { deadline: 'asc' } });
-  return NextResponse.json(goals.map((goal) => ({ ...goal, target: goal.target.toNumber(), current: goal.current.toNumber() })));
+  const goals = await prisma.goal.findMany({ where: { userId }, orderBy: { deadline: 'asc' } });
+  return NextResponse.json(goals.map(serializeGoal));
 }
 
 export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  try {
+    const userId = await requireUserId();
+    if (!userId) return jsonError('Unauthorized', 401);
 
-  const parsed = goalSchema.safeParse(await request.json());
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-
-  const goal = await prisma.goal.create({ data: { ...parsed.data, deadline: parsed.data.deadline ? new Date(parsed.data.deadline) : null, userId: session.user.id } });
-  return NextResponse.json({ ...goal, target: goal.target.toNumber(), current: goal.current.toNumber() }, { status: 201 });
+    const parsed = goalSchema.parse(await request.json());
+    const goal = await prisma.goal.create({ data: { ...parsed, deadline: parsed.deadline ? normalizeDateInput(parsed.deadline) : null, userId } });
+    return NextResponse.json(serializeGoal(goal), { status: 201 });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
